@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets API 연동 서비스</title>
+    <style>
+        /* 깔끔한 디자인을 위한 CSS */
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            text-align: center;
+            min-width: 300px;
+        }
+        .label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #result {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #2D3436;
+            margin: 0;
+        }
+        .loading {
+            color: #007AFF;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <p class="label">Main Sheet - A1 Data</p>
+        <h1 id="result" class="loading">연결 중...</h1>
+    </div>
+
+    <script>
+        // ================= CONFIGURATION =================
+        const API_KEY = 'YOUR_API_KEY_HERE'; // 발급받은 API KEY를 여기에 입력
+        const SPREADSHEET_ID = 'YOUR_SHEET_ID_HERE'; // 구글 시트 주소창의 ID 입력
+        const SHEET_NAME = 'Sheet1'; // 시트 탭 이름 (예: Sheet1)
+        const RANGE = 'A1'; // 가져올 셀 범위
+        // =================================================
+
+        async function fetchGoogleSheetData() {
+            const displayElement = document.getElementById('result');
+            
+            // 구글 시트 API V4 URL (JSON 형태)
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!${RANGE}?key=${API_KEY}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error('API Error:', data.error.message);
+                    displayElement.innerText = "Error: " + data.error.status;
+                    displayElement.classList.remove('loading');
+                    return;
+                }
+
+                if (data.values && data.values[0]) {
+                    // 성공적으로 데이터를 가져온 경우
+                    displayElement.innerText = data.values[0][0];
+                    displayElement.classList.remove('loading');
+                } else {
+                    displayElement.innerText = "데이터 비어있음";
+                    displayElement.classList.remove('loading');
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                displayElement.innerText = "연결 실패";
+                displayElement.classList.remove('loading');
+            }
+        }
+
+        // 페이지 로드 시 실행
+        window.onload = fetchGoogleSheetData;
+    </script>
+</body>
+</html>
